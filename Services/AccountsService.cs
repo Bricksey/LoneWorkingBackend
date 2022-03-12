@@ -1,0 +1,30 @@
+using LoneWorkingBackend.Models;
+using Microsoft.Extensions.Options;
+using MongoDB.Driver;
+
+namespace LoneWorkingBackend.Services
+{
+    public class AccountsService
+    {
+        // CRUD service for the account collection
+        private readonly IMongoCollection<Account> _accountsCollection;
+
+        public AccountsService(IOptions<LoneWorkingDatabaseSettings> loneWorkingDatabaseSettings)
+        {
+            var mongoClient = new MongoClient(loneWorkingDatabaseSettings.Value.ConnectionString);
+            var mongoDatabase = mongoClient.GetDatabase(loneWorkingDatabaseSettings.Value.DatabaseName);
+            _accountsCollection = mongoDatabase.GetCollection<Account>(loneWorkingDatabaseSettings.Value.AccountsCollectionName);
+        } 
+
+        public async Task<List<Account>> GetAsync() =>  
+            await _accountsCollection.Find(_ => true).ToListAsync();
+        public async Task<Account?> GetAsync(string id) => 
+            await _accountsCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+        public async Task CreateAsync(Account newAccount) => 
+            await _accountsCollection.InsertOneAsync(newAccount);
+        public async Task UpdateAsync(string id, Account UpdatedAccount) => 
+            await _accountsCollection.ReplaceOneAsync(x => x.Id == id, UpdatedAccount);
+        public async Task RemoveAsync(string id) =>
+            await _accountsCollection.DeleteOneAsync(x => x.Id == id);
+    }
+}
