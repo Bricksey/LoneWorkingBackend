@@ -82,5 +82,25 @@ namespace LoneWorkingBackend.Controllers
             return CreatedAtAction(null, new {id = newAccount.Id}, newAccount);
         }
 
+        [Authorize]
+        [HttpPost("auth")] // .../api/auth
+        public async Task<ActionResult<int>> Auth([FromQuery]string authCode)
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claims = claimsIdentity.Claims;
+            var Sid = claims.Where(c => c.Type == ClaimTypes.Sid).Select(c => c.Value).SingleOrDefault();
+            Account currentAccount = await _accountsService.GetAsync(Sid);
+            if (currentAccount.AuthCode == authCode)
+            {
+                currentAccount.Verified = true;
+                return StatusCode(200);
+            }
+            else
+            {
+               return StatusCode(401); 
+            }
+            
+        }
+
     }
 }
