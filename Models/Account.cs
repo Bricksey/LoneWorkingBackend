@@ -21,6 +21,10 @@ namespace LoneWorkingBackend.Models
 
         public string? Salt {get; set;} = null!;
 
+        public bool? Verified {get; set;}
+
+        public string? AuthCode {get; set;} = null;
+        
         public bool? Admin {get; set;}
     }
 }
