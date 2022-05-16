@@ -7,6 +7,10 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using MimeKit;
+using MailKit;
+using MailKit.Net.Smtp;
+using System.Text.Json;
 
 namespace LoneWorkingBackend.Controllers
 {
@@ -76,8 +80,35 @@ namespace LoneWorkingBackend.Controllers
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 new ClaimsPrincipal(claimsIdentity),
                 authProperties);
+
+            string json = System.IO.File.ReadAllText("./conf.json");
+            Dictionary<string, Dictionary<string, string>> configFile = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, string>>>(json);
+            Dictionary<string, string> emailConf = configFile["Email"];
             
-            Console.WriteLine(claimsIdentity.Claims.Where(c => c.Type == ClaimTypes.Sid).Select(c => c.Value).SingleOrDefault());
+
+            string email = emailConf["senderEmail"];
+            string senderName = emailConf["senderName"];
+            string smtpPassword = emailConf["smtpPassword"];
+            string smtpServer = emailConf["smtpServer"];
+            string smtpPort = emailConf["smtpPort"];
+            var mailMessage = new MimeMessage();
+            mailMessage.From.Add(new MailboxAddress(senderName, email));
+            mailMessage.To.Add(new MailboxAddress(newAccount.Name, newAccount.Email));
+            mailMessage.Subject = "Verify Your Lone Working Register Account.";
+            mailMessage.Body = new TextPart("plain")
+            {
+                Text = $"Your verification code is {newAccount.AuthCode}."
+            };
+            using (var smtpClient = new SmtpClient())
+            {
+                smtpClient.Connect(smtpServer, Convert.ToInt16(smtpPort), true);
+                smtpClient.Authenticate(email, smtpPassword);
+                smtpClient.Send(mailMessage);
+                smtpClient.Disconnect(true);
+
+            }
+
+
 
             return CreatedAtAction(null, new {id = newAccount.Id}, newAccount);
         }

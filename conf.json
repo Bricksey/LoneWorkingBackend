@@ -1,0 +1,9 @@
+{
+    "Email": {
+        "smtpServer": "smtp.example.com",
+        "smtpPort": "465",
+        "smtpPassword": "1234",
+        "senderName": "John Doe",
+        "senderEmail": "JohnDoe@example.com"
+    }
+}
