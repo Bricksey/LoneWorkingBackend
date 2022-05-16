@@ -38,3 +38,6 @@ msbuild.wrn
 
 # Database
 db/
+
+# Do not overwrite example config
+conf.json
