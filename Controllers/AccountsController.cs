@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Claims;
 using System.Text;
+using System.Threading;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -173,6 +174,23 @@ namespace LoneWorkingBackend.Controllers
             }
         }
 
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<ActionResult<int>> Logout()
+        {
+            var authProperties = new AuthenticationProperties
+            {
+                AllowRefresh = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30),
+                IsPersistent = true,
+                IssuedUtc = DateTimeOffset.UtcNow,
+                RedirectUri = null
+            };
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            await HttpContext.SignOutAsync(authProperties);
+            HttpContext.Session.Clear();
+            return StatusCode(201);
+        }
 
         [Authorize]
         [HttpPost("auth")] // .../api/auth
