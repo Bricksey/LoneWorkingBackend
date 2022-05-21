@@ -20,6 +20,8 @@ namespace LoneWorkingBackend.Services
             await _accountsCollection.Find(_ => true).ToListAsync();
         public async Task<Account?> GetAsync(string id) => 
             await _accountsCollection.Find(x => x.Id == id).FirstOrDefaultAsync();
+        public async Task<Account?> GetAsyncEmail(string email) =>
+            await _accountsCollection.Find(x => x.Email == email).FirstOrDefaultAsync(); 
         public async Task CreateAsync(Account newAccount) => 
             await _accountsCollection.InsertOneAsync(newAccount);
         public async Task UpdateAsync(string id, Account UpdatedAccount) => 
