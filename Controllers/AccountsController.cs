@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -113,6 +114,66 @@ namespace LoneWorkingBackend.Controllers
             return CreatedAtAction(null, new {id = newAccount.Id}, newAccount);
         }
 
+        [HttpPost("login")] // .../api/login
+        public async Task<ActionResult<int>> Login([FromBody] string Email, [FromBody] string Password)
+        {
+            var currentAccount = await _accountsService.GetAsyncEmail(Email);
+            if (currentAccount != null)
+            {
+                string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                    password: Password,
+                    salt: Encoding.ASCII.GetBytes(currentAccount.Salt),
+                    prf: KeyDerivationPrf.HMACSHA256,
+                    iterationCount: 100000,
+                    numBytesRequested: 256 / 8));
+
+                    if(hashed == currentAccount.Password)
+                    {
+                        string role;
+                        if (currentAccount.Admin == true)
+                        {
+                            role = "Admin";
+                        }
+                        else
+                        {
+                            role = "User";
+                        }
+                        var claims = new List<Claim>
+                        {
+                            new Claim (ClaimTypes.Sid, currentAccount.Id),
+                            new Claim (ClaimTypes.Role, role)
+                        };
+
+                        var claimsIdentity = new ClaimsIdentity(
+                            claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                        
+                        var authProperties = new AuthenticationProperties
+                        {
+                            AllowRefresh = true,
+                            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30),
+                            IsPersistent = true,
+                            IssuedUtc = DateTimeOffset.UtcNow,
+                            RedirectUri = null
+                        };
+
+                        await HttpContext.SignInAsync(
+                            CookieAuthenticationDefaults.AuthenticationScheme,
+                            new ClaimsPrincipal(claimsIdentity),
+                            authProperties);
+                        return StatusCode(200);
+                    }
+                    else
+                    {
+                        return StatusCode(401);
+                    }
+            }
+            else
+            {
+                return StatusCode(401);
+            }
+        }
+
+
         [Authorize]
         [HttpPost("auth")] // .../api/auth
         public async Task<ActionResult<int>> Auth([FromQuery]string authCode)
@@ -128,7 +189,7 @@ namespace LoneWorkingBackend.Controllers
             }
             else
             {
-               return StatusCode(401); 
+                return StatusCode(401); 
             }
             
         }
