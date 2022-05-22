@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Globalization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -56,7 +57,14 @@ namespace LoneWorkingBackend.Controllers
             // Accounts are not admin by default
             newAccount.Admin = false;
             newAccount.Verified = false;
-
+            for(int i = 0; i < 4; i++)
+            {
+                for(int j = 0; j < 7; j++)
+                {
+                    newAccount.signInHeatmap[i] = new int[] {0, 0, 0, 0, 0, 0, 0};
+                }
+            }
+            newAccount.heatmapLastUpdate = ISOWeek.GetWeekOfYear(DateTime.Now);
             var authProperties = new AuthenticationProperties
             {
                 AllowRefresh = true,
@@ -115,9 +123,9 @@ namespace LoneWorkingBackend.Controllers
             */
 
 
-
             return CreatedAtAction(null, new {id = newAccount.Id}, newAccount);
         }
+
 
         [HttpPost("login")] // .../api/login
         public async Task<ActionResult<int>> Login(Account loginAccount)
@@ -192,19 +200,27 @@ namespace LoneWorkingBackend.Controllers
             returnAccount.Email = currentAccount.Email;
             returnAccount.currentRoom = currentAccount.currentRoom;
             returnAccount.Verified = currentAccount.Verified;
+            returnAccount.signInHeatmap = currentAccount.signInHeatmap;
             return returnAccount;
 
         }
 
         [Authorize]
         [HttpPost("change-rooms")]
-        public async Task<ActionResult<int>> changeRooms([FromBody]string roomID)
+        public async Task<ActionResult<int>> changeRooms(Room room)
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claims = claimsIdentity.Claims;
             var Sid = claims.Where(c => c.Type == ClaimTypes.Sid).Select(c => c.Value).SingleOrDefault();
             Account currentAccount = await _accountsService.GetAsync(Sid);
-            currentAccount.currentRoom = roomID;
+            if (currentAccount.currentRoom == null)
+            {
+                updateHeatmap(currentAccount);
+                currentAccount.signInHeatmap[0][Convert.ToInt16(DateTime.Now.DayOfWeek)] += 1;
+            }
+            currentAccount.currentRoom = room.roomID;
+            
+            await _accountsService.UpdateAsync(currentAccount.Id, currentAccount);
             return StatusCode(201);
         }
 
@@ -247,6 +263,25 @@ namespace LoneWorkingBackend.Controllers
                 return StatusCode(401); 
             }
             
+        }
+
+        public void updateHeatmap(Account a)
+        {
+            int curWeek = ISOWeek.GetWeekOfYear(DateTime.Now);
+            int lastUpdate = a.heatmapLastUpdate ?? 0;
+            if(a.heatmapLastUpdate != ISOWeek.GetWeekOfYear(DateTime.Now))
+            {
+                int updateDiff = curWeek - lastUpdate;
+                for(int i = 0; i < 4 ; i++)
+                {
+                    if ((i + updateDiff) > 3)
+                    {
+                        break;
+                    }
+                    a.signInHeatmap[i + updateDiff] = a.signInHeatmap[i];
+                    a.signInHeatmap[i] = new int[] {0, 0, 0, 0, 0, 0, 0};
+                }
+            }
         }
 
     }

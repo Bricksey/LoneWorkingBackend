@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace LoneWorkingBackend.Models
 {
+    [Serializable]
     public class Account
     {
         // Schema for an account entity
@@ -26,6 +27,10 @@ namespace LoneWorkingBackend.Models
         public string? AuthCode {get; set;} = null!;
 
         public string? currentRoom{get; set;} = null;
+
+        public int[][] signInHeatmap{get; set;} = new int[4][];
+
+        public int? heatmapLastUpdate{get; set;}
         
         public bool? Admin {get; set;}
     }
