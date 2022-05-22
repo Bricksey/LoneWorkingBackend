@@ -197,9 +197,26 @@ namespace LoneWorkingBackend.Controllers
         }
 
         [Authorize]
+        [HttpPost("change-rooms")]
+        public async Task<ActionResult<int>> changeRooms([FromBody]string roomID)
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claims = claimsIdentity.Claims;
+            var Sid = claims.Where(c => c.Type == ClaimTypes.Sid).Select(c => c.Value).SingleOrDefault();
+            Account currentAccount = await _accountsService.GetAsync(Sid);
+            currentAccount.currentRoom = roomID;
+            return StatusCode(201);
+        }
+
+        [Authorize]
         [HttpPost("sign-out")]
         public async Task<ActionResult<int>> Logout()
         {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claims = claimsIdentity.Claims;
+            var Sid = claims.Where(c => c.Type == ClaimTypes.Sid).Select(c => c.Value).SingleOrDefault();
+            Account currentAccount = await _accountsService.GetAsync(Sid);
+            currentAccount.currentRoom = null;
             var authProperties = new AuthenticationProperties
             {
                 AllowRefresh = true,
@@ -208,7 +225,6 @@ namespace LoneWorkingBackend.Controllers
                 IssuedUtc = DateTimeOffset.UtcNow,
                 RedirectUri = null
             };
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
             await HttpContext.SignOutAsync(authProperties);
             return StatusCode(200);
         }
