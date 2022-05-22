@@ -263,6 +263,27 @@ namespace LoneWorkingBackend.Controllers
             
         }
 
+        [Authorize]
+        [HttpGet("students")]
+        public async Task<ActionResult<List<Dictionary<string, string>>>> Students()
+        {
+            List<Account> students = await _accountsService.GetAsync();
+            List<Dictionary<string, string>> signedIn = new List<Dictionary<string, string>>();
+            foreach(Account s in students)
+            {
+                if(s.currentRoom != null)
+                {
+                    Dictionary<string, string> currentSignIn = new Dictionary<string, string>();
+                    currentSignIn["StudentID"] = Regex.Match(s.Email, @"\d+").Value;
+                    currentSignIn["RoomID"] = s.currentRoom;
+                    currentSignIn["time"] = s.signInTime;
+                    signedIn.Add(currentSignIn);
+                }
+            }
+            return(signedIn);
+
+        }
+
         public async Task updateHeatmap(Account a)
         {
             int curWeek = ISOWeek.GetWeekOfYear(DateTime.Now);
