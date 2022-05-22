@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
@@ -39,6 +40,7 @@ namespace LoneWorkingBackend.Controllers
                 rngCsp.GetNonZeroBytes(salt);
             }
             newAccount.Salt = Convert.ToBase64String(salt);
+            salt = Encoding.ASCII.GetBytes(newAccount.Salt);
 
             // Hash and salt the user's password, store hashed password in db
             string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
@@ -101,6 +103,7 @@ namespace LoneWorkingBackend.Controllers
             {
                 Text = $"Your verification code is {newAccount.AuthCode}."
             };
+            /*
             using (var smtpClient = new SmtpClient())
             {
                 smtpClient.Connect(smtpServer, Convert.ToInt16(smtpPort), true);
@@ -109,6 +112,7 @@ namespace LoneWorkingBackend.Controllers
                 smtpClient.Disconnect(true);
 
             }
+            */
 
 
 
@@ -116,13 +120,13 @@ namespace LoneWorkingBackend.Controllers
         }
 
         [HttpPost("login")] // .../api/login
-        public async Task<ActionResult<int>> Login([FromBody] string Email, [FromBody] string Password)
+        public async Task<ActionResult<int>> Login(Account loginAccount)
         {
-            var currentAccount = await _accountsService.GetAsyncEmail(Email);
+            var currentAccount = await _accountsService.GetAsyncEmail(loginAccount.Email);
             if (currentAccount != null)
             {
                 string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: Password,
+                    password: loginAccount.Password,
                     salt: Encoding.ASCII.GetBytes(currentAccount.Salt),
                     prf: KeyDerivationPrf.HMACSHA256,
                     iterationCount: 100000,
@@ -175,7 +179,25 @@ namespace LoneWorkingBackend.Controllers
         }
 
         [Authorize]
-        [HttpPost("logout")]
+        [HttpGet("check-session")]
+        public async Task<ActionResult<Account>> CheckSession()
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claims = claimsIdentity.Claims;
+            var Sid = claims.Where(c => c.Type == ClaimTypes.Sid).Select(c => c.Value).SingleOrDefault();
+            Account currentAccount = await _accountsService.GetAsync(Sid);
+            Account returnAccount = new Account();
+            returnAccount.Id = Regex.Match(currentAccount.Email, @"\d+").Value;
+            returnAccount.Admin = currentAccount.Admin;
+            returnAccount.Email = currentAccount.Email;
+            returnAccount.currentRoom = currentAccount.currentRoom;
+            returnAccount.Verified = currentAccount.Verified;
+            return returnAccount;
+
+        }
+
+        [Authorize]
+        [HttpPost("sign-out")]
         public async Task<ActionResult<int>> Logout()
         {
             var authProperties = new AuthenticationProperties
@@ -188,8 +210,7 @@ namespace LoneWorkingBackend.Controllers
             };
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             await HttpContext.SignOutAsync(authProperties);
-            HttpContext.Session.Clear();
-            return StatusCode(201);
+            return StatusCode(200);
         }
 
         [Authorize]

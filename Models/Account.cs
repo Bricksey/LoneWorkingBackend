@@ -13,7 +13,7 @@ namespace LoneWorkingBackend.Models
         public string? Id {get; set;}
 
         [BsonElement("Name")]
-        public string Name{get; set;}
+        public string? Name{get; set;} = null!;
 
         public string Email {get; set;}
 
@@ -23,7 +23,9 @@ namespace LoneWorkingBackend.Models
 
         public bool? Verified {get; set;}
 
-        public string? AuthCode {get; set;} = null;
+        public string? AuthCode {get; set;} = null!;
+
+        public string? currentRoom{get; set;} = null;
         
         public bool? Admin {get; set;}
     }
