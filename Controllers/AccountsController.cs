@@ -128,7 +128,7 @@ namespace LoneWorkingBackend.Controllers
 
 
         [HttpPost("login")] // .../api/login
-        public async Task<ActionResult<int>> Login(Account loginAccount)
+        public async Task<ActionResult<Account>> Login(Account loginAccount)
         {
             var currentAccount = await _accountsService.GetAsyncEmail(loginAccount.Email);
             if (currentAccount != null)
@@ -173,7 +173,7 @@ namespace LoneWorkingBackend.Controllers
                             CookieAuthenticationDefaults.AuthenticationScheme,
                             new ClaimsPrincipal(claimsIdentity),
                             authProperties);
-                        return StatusCode(200);
+                        return await stripData(currentAccount);
                     }
                     else
                     {
@@ -194,13 +194,7 @@ namespace LoneWorkingBackend.Controllers
             var claims = claimsIdentity.Claims;
             var Sid = claims.Where(c => c.Type == ClaimTypes.Sid).Select(c => c.Value).SingleOrDefault();
             Account currentAccount = await _accountsService.GetAsync(Sid);
-            Account returnAccount = new Account();
-            returnAccount.Id = Regex.Match(currentAccount.Email, @"\d+").Value;
-            returnAccount.Admin = currentAccount.Admin;
-            returnAccount.Email = currentAccount.Email;
-            returnAccount.currentRoom = currentAccount.currentRoom;
-            returnAccount.Verified = currentAccount.Verified;
-            returnAccount.signInHeatmap = currentAccount.signInHeatmap;
+            Account returnAccount = await stripData(currentAccount);
             return returnAccount;
 
         }
@@ -286,6 +280,19 @@ namespace LoneWorkingBackend.Controllers
                 }
                 await _accountsService.UpdateAsync(a.Id, a);
             }
+        }
+
+        public async Task<Account> stripData(Account a)
+        {
+            Account returnAccount = new Account();
+            returnAccount.Id = Regex.Match(a.Email, @"\d+").Value;
+            returnAccount.Admin = a.Admin;
+            returnAccount.Email = a.Email;
+            returnAccount.currentRoom = a.currentRoom;
+            returnAccount.Verified = a.Verified;
+            returnAccount.signInHeatmap = a.signInHeatmap;
+            return returnAccount;
+
         }
 
     }
