@@ -46,6 +46,7 @@ builder.Services.Configure<LoneWorkingDatabaseSettings>(
     builder.Configuration.GetSection("LoneWorkingDatabase")
 );
 
+builder.Services.AddHostedService<AccountsWorker>();
 builder.Services.AddSingleton<AccountsService>();
 var app = builder.Build();
 
