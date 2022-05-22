@@ -215,7 +215,7 @@ namespace LoneWorkingBackend.Controllers
             Account currentAccount = await _accountsService.GetAsync(Sid);
             if (currentAccount.currentRoom == null)
             {
-                updateHeatmap(currentAccount);
+                await updateHeatmap(currentAccount);
                 currentAccount.signInHeatmap[0][Convert.ToInt16(DateTime.Now.DayOfWeek)] += 1;
             }
             currentAccount.currentRoom = room.roomID;
@@ -233,6 +233,7 @@ namespace LoneWorkingBackend.Controllers
             var Sid = claims.Where(c => c.Type == ClaimTypes.Sid).Select(c => c.Value).SingleOrDefault();
             Account currentAccount = await _accountsService.GetAsync(Sid);
             currentAccount.currentRoom = null;
+            await _accountsService.UpdateAsync(currentAccount.Id, currentAccount);
             var authProperties = new AuthenticationProperties
             {
                 AllowRefresh = true,
@@ -256,6 +257,7 @@ namespace LoneWorkingBackend.Controllers
             if (currentAccount.AuthCode == authCode)
             {
                 currentAccount.Verified = true;
+                await _accountsService.UpdateAsync(currentAccount.Id, currentAccount);
                 return StatusCode(200);
             }
             else
@@ -263,9 +265,10 @@ namespace LoneWorkingBackend.Controllers
                 return StatusCode(401); 
             }
             
+            
         }
 
-        public void updateHeatmap(Account a)
+        public async Task updateHeatmap(Account a)
         {
             int curWeek = ISOWeek.GetWeekOfYear(DateTime.Now);
             int lastUpdate = a.heatmapLastUpdate ?? 0;
@@ -281,6 +284,7 @@ namespace LoneWorkingBackend.Controllers
                     a.signInHeatmap[i + updateDiff] = a.signInHeatmap[i];
                     a.signInHeatmap[i] = new int[] {0, 0, 0, 0, 0, 0, 0};
                 }
+                await _accountsService.UpdateAsync(a.Id, a);
             }
         }
 
