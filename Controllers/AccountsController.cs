@@ -276,7 +276,7 @@ namespace LoneWorkingBackend.Controllers
                     Dictionary<string, string> currentSignIn = new Dictionary<string, string>();
                     currentSignIn["StudentID"] = Regex.Match(s.Email, @"\d+").Value;
                     currentSignIn["RoomID"] = s.currentRoom;
-                    currentSignIn["time"] = s.signInTime;
+                    currentSignIn["time"] = s.signInTime[0..5];
                     signedIn.Add(currentSignIn);
                 }
             }
