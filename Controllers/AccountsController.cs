@@ -213,6 +213,7 @@ namespace LoneWorkingBackend.Controllers
                 currentAccount.signInHeatmap[0][Convert.ToInt16(DateTime.Now.DayOfWeek)] += 1;
             }
             currentAccount.currentRoom = room.roomID;
+            currentAccount.signInTime = DateTime.Now.TimeOfDay.ToString();
             
             await _accountsService.UpdateAsync(currentAccount.Id, currentAccount);
             return StatusCode(201);
@@ -291,6 +292,7 @@ namespace LoneWorkingBackend.Controllers
             returnAccount.currentRoom = a.currentRoom;
             returnAccount.Verified = a.Verified;
             returnAccount.signInHeatmap = a.signInHeatmap;
+            returnAccount.signInTime = a.signInTime[0..5];
             return returnAccount;
 
         }
