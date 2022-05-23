@@ -201,7 +201,7 @@ namespace LoneWorkingBackend.Controllers
 
         [Authorize]
         [HttpPost("change-rooms")]
-        public async Task<ActionResult<int>> changeRooms(Room room)
+        public async Task<ActionResult<int>> changeRooms([FromQuery]string roomID)
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claims = claimsIdentity.Claims;
@@ -212,7 +212,7 @@ namespace LoneWorkingBackend.Controllers
                 await updateHeatmap(currentAccount);
                 currentAccount.signInHeatmap[0][Convert.ToInt16(DateTime.Now.DayOfWeek)] += 1;
             }
-            currentAccount.currentRoom = room.roomID;
+            currentAccount.currentRoom = roomID;
             currentAccount.signInTime = DateTime.Now.TimeOfDay.ToString();
             
             await _accountsService.UpdateAsync(currentAccount.Id, currentAccount);
