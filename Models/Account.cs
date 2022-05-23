@@ -26,8 +26,8 @@ namespace LoneWorkingBackend.Models
 
         public string? AuthCode {get; set;} = null!;
 
-        public string? currentRoom{get; set;} = null;
-        public string? signInTime{get; set;} = null;
+        public string? currentRoom{get; set;} = null!;
+        public string? signInTime{get; set;} = null!;
 
         public int[][] signInHeatmap{get; set;} = new int[4][];
 

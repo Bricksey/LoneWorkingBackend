@@ -313,7 +313,14 @@ namespace LoneWorkingBackend.Controllers
             returnAccount.currentRoom = a.currentRoom;
             returnAccount.Verified = a.Verified;
             returnAccount.signInHeatmap = a.signInHeatmap;
-            returnAccount.signInTime = a.signInTime[0..5];
+            if (a.signInTime == null)
+            {
+                returnAccount.signInTime = a.signInTime;
+            }
+            else
+            {
+                returnAccount.signInTime = a.signInTime[0..5];
+            }
             return returnAccount;
 
         }
