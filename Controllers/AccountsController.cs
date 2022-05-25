@@ -111,7 +111,7 @@ namespace LoneWorkingBackend.Controllers
             {
                 Text = $"Your verification code is {newAccount.AuthCode}."
             };
-            /*
+/*
             using (var smtpClient = new SmtpClient())
             {
                 smtpClient.Connect(smtpServer, Convert.ToInt16(smtpPort), true);
@@ -120,8 +120,7 @@ namespace LoneWorkingBackend.Controllers
                 smtpClient.Disconnect(true);
 
             }
-            */
-
+*/
 
             return CreatedAtAction(null, new {id = newAccount.Id}, newAccount);
         }
@@ -282,6 +281,17 @@ namespace LoneWorkingBackend.Controllers
             }
             return(signedIn);
 
+        }
+
+        [HttpGet("students/{id}")]
+        public async Task<ActionResult<int[][]>> Students(string id)
+        {
+            var s = await _accountsService.GetAsyncEmail($"{id}@students.lincoln.ac.uk");
+            if(s != null)
+            {
+                return(s.signInHeatmap);
+            }
+            return StatusCode(404);
         }
 
         public async Task updateHeatmap(Account a)

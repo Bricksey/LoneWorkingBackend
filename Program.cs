@@ -3,24 +3,6 @@ using LoneWorkingBackend.Models;
 using LoneWorkingBackend.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-
-// Ensure the DB directory exists to allow MongoDB to run
-Console.WriteLine("Creating DB Directory if necessary");
-System.IO.Directory.CreateDirectory("./db/");
-
-// Set parameters to start MongoDB silently
-Console.WriteLine("Attempring to start MongoDB");
-ProcessStartInfo mongodConfig = new ProcessStartInfo("mongod", "--dbpath ./db/");
-mongodConfig.UseShellExecute = false;
-mongodConfig.CreateNoWindow = true;
-mongodConfig.RedirectStandardOutput = true;
-
-// Run MongoDB with these parameters.
-Process mongod = new Process();
-mongod.StartInfo = mongodConfig;
-mongod.Start();
-
-
 // Add services to app with dependency injection
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +30,7 @@ builder.Services.Configure<LoneWorkingDatabaseSettings>(
 
 builder.Services.AddHostedService<AccountsWorker>();
 builder.Services.AddSingleton<AccountsService>();
+builder.Services.AddSingleton<SensorService>();
 var app = builder.Build();
 
 // Map root to simple page for debug

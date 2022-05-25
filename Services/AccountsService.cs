@@ -9,13 +9,14 @@ namespace LoneWorkingBackend.Services
         // CRUD service for the account collection
         private readonly IMongoCollection<Account> _accountsCollection;
 
-        public AccountsService(IOptions<LoneWorkingDatabaseSettings> loneWorkingDatabaseSettings)
+       public AccountsService(IOptions<LoneWorkingDatabaseSettings> loneWorkingDatabaseSettings)
         {
-            var mongoClient = new MongoClient(loneWorkingDatabaseSettings.Value.ConnectionString);
+            var settings = MongoClientSettings.FromConnectionString("mongodb+srv://Harry:9HKCT0xK1PqnPZUM@vanilla.mfxfp.mongodb.net/?retryWrites=true&w=majority");
+            settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+            var mongoClient = new MongoClient(settings);
             var mongoDatabase = mongoClient.GetDatabase(loneWorkingDatabaseSettings.Value.DatabaseName);
             _accountsCollection = mongoDatabase.GetCollection<Account>(loneWorkingDatabaseSettings.Value.AccountsCollectionName);
-        } 
-
+        }
         public async Task<List<Account>> GetAsync() =>  
             await _accountsCollection.Find(_ => true).ToListAsync();
         public async Task<Account?> GetAsync(string id) => 
