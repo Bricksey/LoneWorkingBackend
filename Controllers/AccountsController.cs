@@ -209,7 +209,12 @@ namespace LoneWorkingBackend.Controllers
             if (currentAccount.currentRoom == null)
             {
                 await updateHeatmap(currentAccount);
-                currentAccount.signInHeatmap[0][Convert.ToInt16(DateTime.Now.DayOfWeek) - 1] += 1;
+                int currentDayIndex = Convert.ToInt16(DateTime.Now.DayOfWeek) - 1;
+                if (currentDayIndex == -1)
+                {
+                    currentDayIndex = 6;
+                }
+                currentAccount.signInHeatmap[0][currentDayIndex] += 1;
             }
             currentAccount.currentRoom = roomID;
             currentAccount.signInTime = DateTime.Now.TimeOfDay.ToString();
